@@ -37,7 +37,7 @@ CONFIG = {
     'sdpa': False,          # PyTorch 原生 SDPA（备用）
 
     # 训练加速
-    'compile': True,                   # torch.compile 编译加速（可能提速 20-50%，首次编译慢）
+    'compile': False,                   # torch.compile 编译加速（可能提速 20-50%，首次编译慢）
     'compile_mode': 'default',          # 编译模式: default/reduce-overhead/max-autotune
     'cuda_allow_tf32': False,           # 启用 TF32（仅 RTX 30/40 系列，2080 Ti 不支持）
     'cuda_cudnn_benchmark': True,       # cuDNN 自动调优
@@ -82,6 +82,11 @@ CONFIG = {
     # 输出配置
     'output_dir': r'F:\ComfyUI\models\loras',
     'output_name': 'WAN2.2-LowNoise_test1_v1',
+
+    # 采样配置（训练时生成示例视频）
+    'sample_prompts': './sample_prompts.txt',  # prompt 文件路径（None 则禁用采样）
+    'sample_every_n_steps': 100,               # 每 100 步采样一次
+    'sample_at_first': False,                  # 暂时关闭启动采样，先让训练跑起来
 }
 
 # ==================== 配置结束 ====================
@@ -294,6 +299,18 @@ class WAN22Trainer:
             "--output_name", config['output_name'],
         ])
 
+        # 采样参数（训练时生成示例视频）
+        if config.get('sample_prompts'):
+            cmd.extend([
+                "--vae", config['vae_path'],  # 采样需要 VAE
+                "--t5", config['t5_path'],     # 采样需要 T5
+                "--sample_prompts", config['sample_prompts'],
+            ])
+            if config.get('sample_every_n_steps'):
+                cmd.extend(["--sample_every_n_steps", str(config['sample_every_n_steps'])])
+            if config.get('sample_at_first'):
+                cmd.append("--sample_at_first")
+
         # 如果有恢复状态，添加 resume 参数
         if resume_state:
             cmd.extend(["--resume", resume_state])
@@ -335,6 +352,13 @@ class WAN22Trainer:
         # 日志设置
         if self.config.get('logging_dir'):
             print(f"📈 TensorBoard: {self.config['logging_dir']}")
+
+        # 采样设置
+        if self.config.get('sample_prompts'):
+            print(f"🎬 训练采样: 每 {self.config.get('sample_every_n_steps', 'N')} 步")
+            print(f"   Prompts: {self.config['sample_prompts']}")
+            if self.config.get('sample_at_first'):
+                print(f"   训练前先采样验证配置")
 
         if resume_state:
             print(f"🔄 恢复训练: 是")
