@@ -37,7 +37,7 @@ CONFIG = {
     'sdpa': False,          # PyTorch 原生 SDPA（备用）
 
     # 训练加速
-    'compile': False,                   # torch.compile 编译加速（可能提速 20-50%，首次编译慢）
+    'compile': True,                   # torch.compile 编译加速（可能提速 20-50%，首次编译慢）
     'compile_mode': 'default',          # 编译模式: default/reduce-overhead/max-autotune
     'cuda_allow_tf32': False,           # 启用 TF32（仅 RTX 30/40 系列，2080 Ti 不支持）
     'cuda_cudnn_benchmark': True,       # cuDNN 自动调优
@@ -236,6 +236,7 @@ class WAN22Trainer:
             cmd.extend([
                 "--logging_dir", config['logging_dir'],
                 "--log_with", config.get('log_with', 'tensorboard'),
+                "--log_tracker_name", config['output_name'],  # 使用固定名称，让日志接续
             ])
             if config.get('log_config'):
                 cmd.append("--log_config")
