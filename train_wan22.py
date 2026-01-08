@@ -26,7 +26,7 @@ CONFIG = {
     't5_path': r'F:\ComfyUI\models\text_encoders\umt5-xxl-enc-bf16.safetensors',
 
     # 数据集配置
-    'dataset_config': r'D:\Code\Github\Projects\ai-toolkit\datasets\test6\dataset.toml',
+    'dataset_config': r'D:\Code\Github\Projects\ai-toolkit\datasets\aaa\dataset.toml',
 
     # 训练精度
     'mixed_precision': 'fp16',
@@ -82,7 +82,7 @@ CONFIG = {
 
     # 输出配置
     'output_dir': r'F:\ComfyUI\models\loras',
-    'output_name': 'WAN2.2-LowNoise_test6_v1',
+    'output_name': 'WAN2.2-LowNoise_aaa_v1',
 
     # # 采样配置（训练时生成示例视频）
     # 'sample_prompts': './sample_prompts.txt',  # prompt 文件路径（None 则禁用采样）
