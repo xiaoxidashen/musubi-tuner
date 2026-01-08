@@ -26,18 +26,18 @@ CONFIG = {
     't5_path': r'F:\ComfyUI\models\text_encoders\umt5-xxl-enc-bf16.safetensors',
 
     # 数据集配置
-    'dataset_config': r'D:\Code\Github\Projects\ai-toolkit\datasets\aaa\dataset.toml',
+    'dataset_config': r'D:\Code\Github\Projects\ai-toolkit\datasets\lh3\dataset.toml',
 
     # 训练精度
     'mixed_precision': 'fp16',
     'fp8_base': True,
 
     # Attention 优化（选择一个，已安装 xformers 推荐使用）
-    'xformers': False,       # xformers 加速（更快，已安装）
-    'sdpa': True,          # PyTorch 原生 SDPA（备用）
+    'xformers': True,       # xformers 加速（更快，已安装）
+    'sdpa': False,          # PyTorch 原生 SDPA（备用）
 
     # 训练加速
-    'compile': False,                   # torch.compile 编译加速（可能提速 20-50%，首次编译慢）
+    'compile': True,                   # torch.compile 编译加速（可能提速 20-50%，首次编译慢）
     'compile_mode': 'default',          # 编译模式: default/reduce-overhead/max-autotune
     'cuda_allow_tf32': False,           # 启用 TF32（仅 RTX 30/40 系列，2080 Ti 不支持）
     'cuda_cudnn_benchmark': True,       # cuDNN 自动调优
@@ -75,14 +75,14 @@ CONFIG = {
     'max_timestep': 875,    # 低噪声: 875
 
     # 保存配置
-    'max_train_epochs': 100,
+    'max_train_epochs': 1000,
     'save_every_n_epochs': 10,      # 每 10 个 epoch 保存
     'save_last_n_epochs_state': 3,  # 只保留最近 3 个状态
     'seed': 5,
 
     # 输出配置
     'output_dir': r'F:\ComfyUI\models\loras',
-    'output_name': 'WAN2.2-LowNoise_aaa_v1',
+    'output_name': 'lh_lora_v1',
 
     # 采样配置（训练时生成示例视频）
     'sample_prompts': './sample_prompts.txt',  # prompt 文件路径（None 则禁用采样）
