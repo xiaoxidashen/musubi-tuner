@@ -13,83 +13,89 @@ import webbrowser
 from pathlib import Path
 
 # ==================== 训练命令配置 ====================
-# 直接修改下面的参数列表
+# 直接修改下面的参数列表，参数和值写在一起
 
 OUTPUT_DIR = r'F:\ComfyUI\models\loras'
 OUTPUT_NAME = 'lh_lora_v1'
+LOGGING_DIR = './logs'
 
 CMD = [
-    "accelerate", "launch",
-    "--num_cpu_threads_per_process", "1",
+    "accelerate launch --num_cpu_threads_per_process 1",
     "src/musubi_tuner/wan_train_network.py",
 
     # 模型配置
-    "--task", "t2v-A14B",
-    "--dit", r"F:\ComfyUI\models\diffusion_models\wan2.2_t2v_low_noise_14B_fp16.safetensors",
-    "--vae", r"F:\ComfyUI\models\vae\Wan2.1_VAE.safetensors",
-    "--t5", r"F:\ComfyUI\models\text_encoders\umt5-xxl-enc-bf16.safetensors",
+    "--task t2v-A14B",
+    r"--dit F:\ComfyUI\models\diffusion_models\wan2.2_t2v_low_noise_14B_fp16.safetensors",
+    r"--vae F:\ComfyUI\models\vae\Wan2.1_VAE.safetensors",
+    r"--t5 F:\ComfyUI\models\text_encoders\umt5-xxl-enc-bf16.safetensors",
 
     # 数据集
-    "--dataset_config", r"D:\Code\Github\Projects\ai-toolkit\datasets\lh3\dataset.toml",
+    r"--dataset_config D:\Code\Github\Projects\ai-toolkit\datasets\lh3\dataset.toml",
 
     # 精度与加速
-    "--mixed_precision", "fp16",
+    "--mixed_precision fp16",
     "--fp8_base",
     "--xformers",
     "--gradient_checkpointing",
     "--compile",
-    "--compile_mode", "default",
+    "--compile_mode default",
     "--cuda_cudnn_benchmark",
     "--persistent_data_loader_workers",
 
     # 优化器
-    "--optimizer_type", "adamw8bit",
-    "--learning_rate", "2e-4",
+    "--optimizer_type adamw8bit",
+    "--learning_rate 2e-4",
 
     # 学习率调度
-    "--lr_scheduler", "cosine",
-    "--lr_warmup_steps", "50",
+    "--lr_scheduler cosine",
+    "--lr_warmup_steps 50",
 
     # 数据加载
-    "--max_data_loader_n_workers", "2",
-    "--gradient_accumulation_steps", "1",
+    "--max_data_loader_n_workers 2",
+    "--gradient_accumulation_steps 1",
 
     # LoRA
-    "--network_module", "networks.lora_wan",
-    "--network_dim", "32",
+    "--network_module networks.lora_wan",
+    "--network_dim 32",
 
     # 时间步（低噪声模型）
-    "--timestep_sampling", "shift",
-    "--discrete_flow_shift", "1.0",
-    "--min_timestep", "0",
-    "--max_timestep", "875",
+    "--timestep_sampling shift",
+    "--discrete_flow_shift 1.0",
+    "--min_timestep 0",
+    "--max_timestep 875",
     "--preserve_distribution_shape",
 
     # 训练与保存
-    "--max_train_epochs", "1000",
-    "--save_every_n_epochs", "10",
+    "--max_train_epochs 1000",
+    "--save_every_n_epochs 10",
     "--save_state",
-    "--save_last_n_epochs_state", "3",
-    "--seed", "42",
+    "--save_last_n_epochs_state 3",
+    "--seed 42",
 
     # 输出
-    "--output_dir", OUTPUT_DIR,
-    "--output_name", OUTPUT_NAME,
+    f"--output_dir {OUTPUT_DIR}",
+    f"--output_name {OUTPUT_NAME}",
 
     # 日志
-    "--logging_dir", "./logs",
-    "--log_with", "tensorboard",
+    f"--logging_dir {LOGGING_DIR}",
+    "--log_with tensorboard",
     "--log_config",
 
     # 采样（可选，注释掉则禁用）
-    "--sample_prompts", "./sample_prompts.txt",
-    "--sample_every_n_steps", "50",
+    "--sample_prompts ./sample_prompts.txt",
+    "--sample_every_n_steps 50",
     # "--sample_at_first",
 ]
 
 # ==================== 配置结束 ====================
 
-LOGGING_DIR = "./logs"  # TensorBoard 日志目录
+
+def build_cmd():
+    """展开命令列表"""
+    result = []
+    for item in CMD:
+        result.extend(item.split())
+    return result
 
 
 def start_tensorboard():
@@ -138,10 +144,9 @@ def find_latest_state():
 def main():
     Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
 
-    # 启动 TensorBoard
     start_tensorboard()
 
-    cmd = CMD.copy()
+    cmd = build_cmd()
     resume_state = find_latest_state()
     if resume_state:
         cmd.extend(["--resume", resume_state])
