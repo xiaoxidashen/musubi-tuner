@@ -51,14 +51,14 @@ CONFIG = {
     # 优化器配置
     'optimizer_type': 'adamw8bit',
     'learning_rate': 2e-4,
-    'weight_decay': 0.1,
-    'max_grad_norm': 1,
+    # 'weight_decay': 0.1,
+    # 'max_grad_norm': 1,
 
     # 学习率调度器
     'lr_scheduler': 'cosine',
-    'lr_scheduler_power': 8,
-    'lr_scheduler_min_lr_ratio': 5e-5,
-    'lr_warmup_steps': 10,
+    # 'lr_scheduler_power': 8,
+    # 'lr_scheduler_min_lr_ratio': 5e-5,
+    'lr_warmup_steps': 50,
 
     # 训练参数
     'gradient_accumulation_steps': 1,
@@ -66,7 +66,7 @@ CONFIG = {
 
     # LoRA 参数
     'network_dim': 32,
-    'network_alpha': 16,
+    # 'network_alpha': 16,
 
     # 时间步配置（低噪声模型）
     'timestep_sampling': 'shift',
@@ -86,10 +86,9 @@ CONFIG = {
 
     # 采样配置（训练时生成示例视频）
     'sample_prompts': './sample_prompts.txt',  # prompt 文件路径（None 则禁用采样）
-    'sample_every_n_steps': 100,               # 每 100 步采样一次
+    'sample_every_n_steps': 50,               # 每 100 步采样一次
     'sample_at_first': False,                  # 暂时关闭启动采样，先让训练跑起来
 }
-
 # ==================== 配置结束 ====================
 
 
@@ -250,15 +249,15 @@ class WAN22Trainer:
         cmd.extend([
             "--optimizer_type", config['optimizer_type'],
             "--learning_rate", str(config['learning_rate']),
-            "--optimizer_args", f"weight_decay={config['weight_decay']}",
-            "--max_grad_norm", str(config['max_grad_norm']),
+            # "--optimizer_args", f"weight_decay={config['weight_decay']}",
+            # "--max_grad_norm", str(config['max_grad_norm']),
         ])
 
         # 学习率调度器
         cmd.extend([
             "--lr_scheduler", config['lr_scheduler'],
-            "--lr_scheduler_power", str(config['lr_scheduler_power']),
-            "--lr_scheduler_min_lr_ratio", str(config['lr_scheduler_min_lr_ratio']),
+            # "--lr_scheduler_power", str(config['lr_scheduler_power']),
+            # "--lr_scheduler_min_lr_ratio", str(config['lr_scheduler_min_lr_ratio']),
             "--lr_warmup_steps", str(config['lr_warmup_steps']),
         ])
 
@@ -273,7 +272,7 @@ class WAN22Trainer:
         cmd.extend([
             "--network_module", "networks.lora_wan",
             "--network_dim", str(config['network_dim']),
-            "--network_alpha", str(config['network_alpha']),
+            # "--network_alpha", str(config['network_alpha']),
         ])
 
         # 时间步参数
