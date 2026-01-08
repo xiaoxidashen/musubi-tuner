@@ -33,8 +33,8 @@ CONFIG = {
     'fp8_base': True,
 
     # Attention 优化（选择一个，已安装 xformers 推荐使用）
-    'xformers': True,       # xformers 加速（更快，已安装）
-    'sdpa': False,          # PyTorch 原生 SDPA（备用）
+    'xformers': False,       # xformers 加速（更快，已安装）
+    'sdpa': True,          # PyTorch 原生 SDPA（备用）
 
     # 训练加速
     'compile': False,                   # torch.compile 编译加速（可能提速 20-50%，首次编译慢）
@@ -49,22 +49,23 @@ CONFIG = {
     'log_config': True,                 # 记录训练配置
 
     # 优化器配置
-    'optimizer_type': 'adamw',
-    'learning_rate': 3e-4,
+    'optimizer_type': 'adamw8bit',
+    'learning_rate': 2e-4,
     'weight_decay': 0.1,
-    'max_grad_norm': 0,
+    'max_grad_norm': 1,
 
     # 学习率调度器
-    'lr_scheduler': 'polynomial',
+    'lr_scheduler': 'cosine',
     'lr_scheduler_power': 8,
     'lr_scheduler_min_lr_ratio': 5e-5,
+    'lr_warmup_steps': 10,
 
     # 训练参数
     'gradient_accumulation_steps': 1,
     'max_data_loader_n_workers': 2,
 
     # LoRA 参数
-    'network_dim': 16,
+    'network_dim': 32,
     'network_alpha': 16,
 
     # 时间步配置（低噪声模型）
@@ -259,6 +260,7 @@ class WAN22Trainer:
             "--lr_scheduler", config['lr_scheduler'],
             "--lr_scheduler_power", str(config['lr_scheduler_power']),
             "--lr_scheduler_min_lr_ratio", str(config['lr_scheduler_min_lr_ratio']),
+            "--lr_warmup_steps", str(config['lr_warmup_steps']),
         ])
 
         # 训练参数
