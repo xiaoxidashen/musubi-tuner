@@ -78,7 +78,7 @@ CONFIG = {
     'max_train_epochs': 1000,
     'save_every_n_epochs': 10,      # 每 10 个 epoch 保存
     'save_last_n_epochs_state': 3,  # 只保留最近 3 个状态
-    'seed': 5,
+    'seed': 42,
 
     # 输出配置
     'output_dir': r'F:\ComfyUI\models\loras',
