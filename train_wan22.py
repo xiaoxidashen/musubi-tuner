@@ -84,10 +84,10 @@ CONFIG = {
     'output_dir': r'F:\ComfyUI\models\loras',
     'output_name': 'WAN2.2-LowNoise_aaa_v1',
 
-    # # 采样配置（训练时生成示例视频）
-    # 'sample_prompts': './sample_prompts.txt',  # prompt 文件路径（None 则禁用采样）
-    # 'sample_every_n_steps': 100,               # 每 100 步采样一次
-    # 'sample_at_first': False,                  # 暂时关闭启动采样，先让训练跑起来
+    # 采样配置（训练时生成示例视频）
+    'sample_prompts': './sample_prompts.txt',  # prompt 文件路径（None 则禁用采样）
+    'sample_every_n_steps': 100,               # 每 100 步采样一次
+    'sample_at_first': False,                  # 暂时关闭启动采样，先让训练跑起来
 }
 
 # ==================== 配置结束 ====================
@@ -242,7 +242,6 @@ class WAN22Trainer:
             cmd.extend([
                 "--logging_dir", config['logging_dir'],
                 "--log_with", config.get('log_with', 'tensorboard'),
-                "--log_tracker_name", config['output_name'],  # 使用固定名称，让日志接续
             ])
             if config.get('log_config'):
                 cmd.append("--log_config")
