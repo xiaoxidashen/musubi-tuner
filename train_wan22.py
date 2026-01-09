@@ -49,7 +49,7 @@ CMD = [
 
     # 学习率调度
     "--lr_scheduler cosine",
-    "--lr_warmup_steps 50",
+    "--lr_warmup_steps 20",
 
     # 数据加载
     "--max_data_loader_n_workers 2",
@@ -68,7 +68,7 @@ CMD = [
     "--preserve_distribution_shape",
 
     # 训练与保存
-    "--max_train_epochs 1000",
+    "--max_train_epochs 100",
     "--save_every_n_epochs 10",
     "--save_state",
     "--save_last_n_epochs_state 3",
