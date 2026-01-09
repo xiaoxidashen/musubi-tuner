@@ -85,7 +85,7 @@ CMD = [
 
     # 采样（可选，注释掉则禁用）
     "--sample_prompts ./sample_prompts.txt",
-    "--sample_every_n_steps 50",
+    "--sample_every_n_epochs 20",
     # "--sample_at_first",
 ]
 
