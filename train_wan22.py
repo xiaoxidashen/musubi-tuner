@@ -36,6 +36,7 @@ CMD = [
     "--mixed_precision fp16",
     "--fp8_base",
     "--xformers",
+    "--split_attn",  # 切分注意力计算以节省显存
     "--gradient_checkpointing",
     "--compile",
     "--compile_mode default",
@@ -52,14 +53,15 @@ CMD = [
 
     # 数据加载
     "--max_data_loader_n_workers 2",
-    "--gradient_accumulation_steps 1",
+    "--gradient_accumulation_steps 2",
 
     # LoRA
     "--network_module networks.lora_wan",
     "--network_dim 32",
+    "--network_alpha 16",  # 推荐设为 dim 的一半，即 16
 
     # 时间步（低噪声模型）
-    "--timestep_sampling shift",
+    "--timestep_sampling sigmoid",
     "--discrete_flow_shift 1.0",
     "--min_timestep 0",
     "--max_timestep 875",
@@ -86,6 +88,7 @@ CMD = [
     "--sample_every_n_steps 50",
     # "--sample_at_first",
 ]
+
 
 # ==================== 配置结束 ====================
 
@@ -151,9 +154,9 @@ def main():
     if resume_state:
         cmd.extend(["--resume", resume_state])
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"WAN 2.2 LoRA 训练: {OUTPUT_NAME}")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     try:
         subprocess.run(cmd, check=True)
