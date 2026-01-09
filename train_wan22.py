@@ -30,7 +30,7 @@ CMD = [
     r"--t5 F:\ComfyUI\models\text_encoders\umt5-xxl-enc-bf16.safetensors",
 
     # 数据集
-    r"--dataset_config D:\Code\Github\Projects\ai-toolkit\datasets\lh3\dataset.toml",
+    r"--dataset_config D:\Code\Github\Projects\ai-toolkit\datasets\test5\dataset.toml",
 
     # 精度与加速
     "--mixed_precision fp16",
@@ -45,7 +45,7 @@ CMD = [
 
     # 优化器
     "--optimizer_type adamw8bit",
-    "--learning_rate 2e-4",
+    "--learning_rate 5e-4",
 
     # 学习率调度
     "--lr_scheduler cosine",
@@ -58,7 +58,7 @@ CMD = [
     # LoRA
     "--network_module networks.lora_wan",
     "--network_dim 32",
-    "--network_alpha 16",  # 推荐设为 dim 的一半，即 16
+    "--network_alpha 32",  # 推荐设为 dim 的一半，即 16
 
     # 时间步（低噪声模型）
     "--timestep_sampling sigmoid",
