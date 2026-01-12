@@ -26,7 +26,7 @@ CMD = [
     # 模型配置
     "--task t2v-A14B",
     r"--dit F:\ComfyUI\models\diffusion_models\wan2.2_t2v_low_noise_14B_fp16.safetensors",
-    r"--vae F:\ComfyUI\models\vae\Wan2.1_VAE.safetensors",
+    r"--vae F:\ComfyUI\models\vae\wan_2.1_vae.safetensors",
     r"--t5 F:\ComfyUI\models\text_encoders\umt5-xxl-enc-bf16.safetensors",
 
     # 数据集
