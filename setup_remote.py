@@ -55,9 +55,9 @@ def main():
     else:
         print("✓ huggingface_hub 已安装")
 
-    # 切换到 datasets 目录下载模型
-    print("\n切换到 datasets 目录...")
-    os.chdir("datasets")
+    # 切换到 models 目录下载模型
+    print("\n切换到 models 目录...")
+    os.chdir("models")
     print(f"当前目录: {os.getcwd()}")
 
     if not args.skip_download:
@@ -106,8 +106,8 @@ def main():
         print(f"  - {config}")
 
     # 模型路径
-    vae_path = "datasets/split_files/vae/wan_2.1_vae.safetensors"
-    t5_path = "datasets/umt5-xxl-enc-bf16.safetensors"
+    vae_path = "models/split_files/vae/wan_2.1_vae.safetensors"
+    t5_path = "models/umt5-xxl-enc-bf16.safetensors"
 
     # 对每个数据集进行缓存
     for config_path in configs:
