@@ -35,6 +35,8 @@ CMD = [
     # 精度与加速
     "--mixed_precision fp16",
     "--fp8_base",
+    "--blocks_to_swap 1",  # 将20个块交换到CPU，节省显存（模型共40层）
+    "--img_in_txt_in_offloading",  # 将 img_in 和 txt_in 卸载到 CPU
     "--xformers",
     "--split_attn",  # 切分注意力计算以节省显存
     "--gradient_checkpointing",
@@ -84,9 +86,9 @@ CMD = [
     "--log_config",
 
     # 采样（可选，注释掉则禁用）
-    "--sample_prompts ./sample_prompts.txt",
-    "--sample_every_n_epochs 20",
-    "--sample_at_first",
+    # "--sample_prompts ./sample_prompts.txt",
+    # "--sample_every_n_epochs 20",
+    # "--sample_at_first",
 ]
 
 
