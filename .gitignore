@@ -15,3 +15,13 @@ AGENTS.md
 .mcp.json
 .idea
 *.safetensors
+
+# 忽略 datasets 下的所有内容
+datasets/*
+# 但保留 .git_keep
+!datasets/.git_keep
+
+# 忽略 models 下的所有内容
+models/*
+# 但保留 .git_keep
+!models/.git_keep
