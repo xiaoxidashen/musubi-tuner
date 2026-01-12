@@ -30,7 +30,7 @@ CMD = [
     r"--t5 models/umt5-xxl-enc-bf16.safetensors",
 
     # 数据集
-    r"--dataset_config D:\Code\Github\Projects\ai-toolkit\datasets\test5\dataset.toml",
+    r"--dataset_config datasets/test5/dataset.toml",
 
     # 精度与加速
     "--mixed_precision fp16",
@@ -86,7 +86,7 @@ CMD = [
     # 采样（可选，注释掉则禁用）
     "--sample_prompts ./sample_prompts.txt",
     "--sample_every_n_epochs 20",
-    # "--sample_at_first",
+    "--sample_at_first",
 ]
 
 
