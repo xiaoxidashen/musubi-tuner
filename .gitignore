@@ -25,3 +25,8 @@ datasets/*
 models/*
 # 但保留 .git_keep
 !models/.git_keep
+
+# 忽略 output 下的所有内容
+output/*
+# 但保留 .git_keep
+!output/.git_keep
