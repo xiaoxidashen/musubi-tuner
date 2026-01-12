@@ -25,9 +25,9 @@ CMD = [
 
     # 模型配置
     "--task t2v-A14B",
-    r"--dit F:\ComfyUI\models\diffusion_models\wan2.2_t2v_low_noise_14B_fp16.safetensors",
-    r"--vae F:\ComfyUI\models\vae\wan_2.1_vae.safetensors",
-    r"--t5 F:\ComfyUI\models\text_encoders\umt5-xxl-enc-bf16.safetensors",
+    r"--dit models/split_files/diffusion_models/wan2.2_t2v_low_noise_14B_fp16.safetensors",
+    r"--vae models/split_files/vae/wan_2.1_vae.safetensors",
+    r"--t5 models/umt5-xxl-enc-bf16.safetensors",
 
     # 数据集
     r"--dataset_config D:\Code\Github\Projects\ai-toolkit\datasets\test5\dataset.toml",
