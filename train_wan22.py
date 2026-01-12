@@ -15,7 +15,7 @@ from pathlib import Path
 # ==================== 训练命令配置 ====================
 # 直接修改下面的参数列表，参数和值写在一起
 
-OUTPUT_DIR = r'F:\ComfyUI\models\loras'
+OUTPUT_DIR = r'output'
 OUTPUT_NAME = 'lh_lora_v1'
 LOGGING_DIR = './logs'
 
