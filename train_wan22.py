@@ -51,7 +51,7 @@ CMD = [
     "--learning_rate 5e-4",
 
     # 学习率调度
-    "--lr_scheduler cosine",
+    "--lr_scheduler constant_with_warmup",
     "--lr_warmup_steps 20",
 
     # 数据加载
