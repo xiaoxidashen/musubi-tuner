@@ -5,6 +5,8 @@ WAN 2.2 T2V LoRA 训练脚本
 用法: python train_wan22.py
 """
 
+import os
+import signal
 import subprocess
 import sys
 import time
@@ -169,16 +171,33 @@ def main():
     print(f"WAN 2.2 LoRA 训练: {OUTPUT_NAME}")
     print(f"{'=' * 60}\n")
 
-    try:
-        subprocess.run(cmd, check=True)
+    process = None
+
+    def handle_sigint(sig, frame):
+        print("\n手动中断，杀掉进程...")
+        if process:
+            if sys.platform != 'win32':
+                os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+            else:
+                process.kill()
+        sys.exit(0)
+
+    # 注册信号处理器
+    signal.signal(signal.SIGINT, handle_sigint)
+
+    # 启动训练进程（Linux 上创建新进程组）
+    if sys.platform != 'win32':
+        process = subprocess.Popen(cmd, preexec_fn=os.setsid)
+    else:
+        process = subprocess.Popen(cmd)
+
+    returncode = process.wait()
+    if returncode == 0:
         print("\n训练完成！")
-    except subprocess.CalledProcessError as e:
-        print(f"\n训练中断（退出码: {e.returncode}）")
+    else:
+        print(f"\n训练中断（退出码: {returncode}）")
         print("再次运行可从检查点恢复")
         sys.exit(1)
-    except KeyboardInterrupt:
-        print("\n手动中断，再次运行可恢复")
-        sys.exit(0)
 
 
 if __name__ == "__main__":
