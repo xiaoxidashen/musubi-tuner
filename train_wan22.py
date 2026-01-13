@@ -5,7 +5,6 @@ WAN 2.2 T2V LoRA 训练脚本
 用法: python train_wan22.py
 """
 
-import socket
 import subprocess
 import sys
 import time
@@ -103,15 +102,21 @@ def build_cmd():
     return result
 
 
+def kill_tensorboard():
+    """杀掉已存在的 TensorBoard 进程"""
+    if sys.platform == 'win32':
+        subprocess.run(['taskkill', '/F', '/IM', 'tensorboard.exe'],
+                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    else:
+        subprocess.run(['pkill', '-f', 'tensorboard'],
+                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
 def start_tensorboard():
-    """启动 TensorBoard"""
+    """启动 TensorBoard（先杀掉已存在的进程）"""
     port = 6006
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    if sock.connect_ex(('localhost', port)) == 0:
-        sock.close()
-        print(f"TensorBoard 已在运行: http://localhost:{port}")
-        return None
-    sock.close()
+    kill_tensorboard()
+    time.sleep(1)
 
     try:
         proc = subprocess.Popen(
