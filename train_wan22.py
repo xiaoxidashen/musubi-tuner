@@ -141,18 +141,32 @@ def start_tensorboard():
 
 
 def find_latest_state():
-    """查找最新的训练状态"""
+    """查找最新的训练状态（通过目录修改时间判断）"""
     output_dir = Path(OUTPUT_DIR)
+
+    # 查找所有状态目录：
+    # - 中间状态: lh_lora_v1-000190-state（带 epoch 编号）
+    # - 完成状态: lh_lora_v1-state（无 epoch 编号）
     state_dirs = list(output_dir.glob(f"{OUTPUT_NAME}-*-state"))
+    final_state = output_dir / f"{OUTPUT_NAME}-state"
+    if final_state.exists():
+        state_dirs.append(final_state)
 
     if not state_dirs:
         print("未找到已保存的状态，将从头开始训练")
         return None
 
-    state_dirs.sort(key=lambda x: int(x.name.split('-')[-2]))
+    # 按目录修改时间排序，取最新的
+    state_dirs.sort(key=lambda x: x.stat().st_mtime)
     latest = state_dirs[-1]
-    epoch = latest.name.split('-')[-2]
-    print(f"找到状态: {latest.name}，从 epoch {epoch} 恢复")
+
+    # 判断是完成状态还是中间状态
+    if latest.name == f"{OUTPUT_NAME}-state":
+        print(f"找到完成状态: {latest.name}，将恢复训练")
+    else:
+        epoch = latest.name.split('-')[-2]
+        print(f"找到中间状态: {latest.name}，从 epoch {epoch} 恢复")
+
     return str(latest)
 
 
