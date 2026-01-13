@@ -16,7 +16,7 @@ from pathlib import Path
 
 OUTPUT_DIR = r'output'
 OUTPUT_NAME = 'lh_lora_v1'
-LOGGING_DIR = './logs'
+LOGGING_DIR = '/workspace' if sys.platform == 'linux' else './logs'
 
 CMD = [
     "accelerate launch --num_cpu_threads_per_process 1",
