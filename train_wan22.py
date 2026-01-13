@@ -71,8 +71,8 @@ CMD = [
     "--preserve_distribution_shape",
 
     # 训练与保存
-    "--max_train_epochs 100",
-    "--save_every_n_epochs 10",
+    "--max_train_epochs 200",
+    "--save_every_n_epochs 1",
     "--save_state",
     "--save_last_n_epochs_state 5",
     "--save_last_n_epochs 5",
