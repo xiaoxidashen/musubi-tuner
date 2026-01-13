@@ -153,6 +153,7 @@ def find_latest_state():
 
 def main():
     Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
+    Path(LOGGING_DIR).mkdir(parents=True, exist_ok=True)
 
     start_tensorboard()
 
