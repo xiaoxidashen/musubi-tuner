@@ -114,7 +114,9 @@ def kill_tensorboard():
 
 
 def start_tensorboard():
-    """启动 TensorBoard（先杀掉已存在的进程）"""
+    """启动 TensorBoard（先杀掉已存在的进程），仅 Windows"""
+    if sys.platform != 'win32':
+        return None
     port = 6006
     kill_tensorboard()
     time.sleep(1)
