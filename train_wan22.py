@@ -73,6 +73,7 @@ CMD = [
     "--save_every_n_epochs 10",
     "--save_state",
     "--save_last_n_epochs_state 3",
+    "--save_last_n_epochs 3",
     "--seed 42",
 
     # 输出
