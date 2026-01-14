@@ -31,7 +31,7 @@ CMD = [
     r"--t5 models/umt5-xxl-enc-bf16.safetensors",
 
     # 数据集
-    r"--dataset_config datasets/test5/dataset.toml",
+    r"--dataset_config datasets/test6/dataset.toml",
 
     # 精度与加速
     "--mixed_precision fp16",
@@ -192,6 +192,9 @@ def main():
         if process:
             if sys.platform != 'win32':
                 os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+                # 释放 GPU 资源
+                subprocess.run('fuser -k /dev/nvidia*', shell=True,
+                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             else:
                 process.kill()
         sys.exit(0)
