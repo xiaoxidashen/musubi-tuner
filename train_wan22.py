@@ -65,7 +65,7 @@ def build_cmd_list(noise_type: str):
 
         # 优化器
         "--optimizer_type adamw8bit",
-        "--learning_rate 5e-4",
+        "--learning_rate 0.002",
 
         # 学习率调度
         "--lr_scheduler constant_with_warmup",
@@ -73,7 +73,7 @@ def build_cmd_list(noise_type: str):
 
         # 数据加载
         "--max_data_loader_n_workers 2",
-        "--gradient_accumulation_steps 2",
+        # "--gradient_accumulation_steps 2",
 
         # LoRA
         "--network_module networks.lora_wan",
