@@ -55,9 +55,9 @@ def build_cmd_list(noise_type: str):
         "--mixed_precision fp16",
         "--fp8_base",
         # "--blocks_to_swap 1",  # 将20个块交换到CPU，节省显存（模型共40层）
-        "--img_in_txt_in_offloading",  # 将 img_in 和 txt_in 卸载到 CPU
+        # "--img_in_txt_in_offloading",  # 将 img_in 和 txt_in 卸载到 CPU
         '--flash_attn' if sys.platform == 'linux' else '--xformers',
-        "--split_attn",  # 切分注意力计算以节省显存
+        # "--split_attn",  # 切分注意力计算以节省显存
         "--gradient_checkpointing",
         "--compile",
         "--compile_mode default",
@@ -69,13 +69,13 @@ def build_cmd_list(noise_type: str):
         "--learning_rate 0.001",
 
         # 学习率调度
-        "--lr_scheduler constant_with_warmup", # polynomial 多项式衰减, cosine 余弦退火(推荐用cosine_with_min_lr)
+        "--lr_scheduler polynomial", # polynomial 多项式衰减, cosine 余弦退火(推荐用cosine_with_min_lr)
         "--lr_warmup_steps 20",
         "--lr_scheduler_power 1.0", # 仅适用于 polynomial 衰减, 默认为 1, >1 凹函数（下凹）, <1 凸函数（上凸）
         "--lr_scheduler_min_lr_ratio 0", # 最小学习率, polynomial和cosine_with_min_lr的初始学习率的百分比
 
         # 数据加载
-        "--max_data_loader_n_workers 2",
+        "--max_data_loader_n_workers 8",
         # "--gradient_accumulation_steps 2",
 
         # LoRA
