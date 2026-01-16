@@ -91,7 +91,7 @@ def build_cmd_list(noise_type: str):
         "--preserve_distribution_shape",
 
         # 训练与保存
-        "--max_train_epochs 200",
+        "--max_train_epochs 50",
         "--save_every_n_epochs 1",
         "--save_state",
         "--save_last_n_epochs_state 5",
@@ -120,10 +120,45 @@ def build_cmd_list(noise_type: str):
 UPLOAD_URL = "http://tempbox.org:8888/upload"
 
 
+def get_dir_size(path: Path) -> int:
+    """获取目录总大小"""
+    return sum(f.stat().st_size for f in path.rglob('*') if f.is_file())
+
+
+def wait_until_stable(paths: list, interval: float = 2.0, max_wait: int = 120):
+    """等待文件/目录大小稳定"""
+    def get_sizes():
+        sizes = []
+        for p in paths:
+            if p.is_dir():
+                sizes.append(get_dir_size(p))
+            elif p.is_file():
+                sizes.append(p.stat().st_size)
+            else:
+                sizes.append(0)
+        return sizes
+
+    last_sizes = get_sizes()
+    waited = 0
+    check_count = 0
+    while waited < max_wait:
+        time.sleep(interval)
+        waited += interval
+        check_count += 1
+        current_sizes = get_sizes()
+        total_mb = sum(current_sizes) / 1024 / 1024
+        if check_count % 5 == 0:  # 每 10 秒打印一次（5 次 * 2 秒）
+            print(f"[Uploader] 等待写入完成... {waited:.0f}s, 当前大小: {total_mb:.1f}MB")
+        if current_sizes == last_sizes:
+            return True
+        last_sizes = current_sizes
+    return False
+
+
 def state_uploader_thread(stop_event: threading.Event):
     """
-    监控 output 目录下新生成的 -state 文件夹，打包上传后删除压缩包
-    仅在 Linux 下运行
+    监控 output 目录下新生成的 -state 文件夹和对应的 safetensors 文件
+    等待文件写入完成后打包上传，仅在 Linux 下运行
     """
     if sys.platform != 'linux':
         return
@@ -141,18 +176,34 @@ def state_uploader_thread(stop_event: threading.Event):
             new_states = current_states - uploaded_states
 
             for state_name in new_states:
-                zip_path = output_dir / f"{state_name}.zip"
+                # state 文件夹: lh_lora_v1_high-000100-state
+                # 对应权重文件: lh_lora_v1_high-000100.safetensors
+                state_path = output_dir / state_name
+                weight_name = state_name.replace('-state', '.safetensors')
+                weight_path = output_dir / weight_name
 
-                print(f"[Uploader] 发现新 state: {state_name}，打包中...")
+                # 等待文件写入完成
+                paths_to_check = [state_path]
+                if weight_path.exists():
+                    paths_to_check.append(weight_path)
+
+                print(f"[Uploader] 发现新文件，等待写入完成...")
+                if not wait_until_stable(paths_to_check):
+                    print(f"[Uploader] 等待超时，跳过本次")
+                    continue
+
+                # 打包 state 文件夹
+                zip_path = output_dir / f"{state_name}.zip"
+                print(f"[Uploader] 打包 {state_name}...")
                 shutil.make_archive(str(zip_path.with_suffix('')), 'zip', output_dir, state_name)
 
+                # 上传 state zip
                 print(f"[Uploader] 上传 {zip_path.name}...")
                 try:
                     with open(zip_path, 'rb') as f:
                         resp = requests.post(UPLOAD_URL, files={'file': f}, timeout=600)
                     if resp.status_code == 200:
-                        print(f"[Uploader] 上传成功: {state_name}")
-                        uploaded_states.add(state_name)
+                        print(f"[Uploader] 上传成功: {zip_path.name}")
                     else:
                         print(f"[Uploader] 上传失败: {resp.status_code}")
                 except Exception as e:
@@ -161,10 +212,25 @@ def state_uploader_thread(stop_event: threading.Event):
                 if zip_path.exists():
                     zip_path.unlink()
 
+                # 上传 safetensors 文件
+                if weight_path.exists():
+                    print(f"[Uploader] 上传 {weight_name}...")
+                    try:
+                        with open(weight_path, 'rb') as f:
+                            resp = requests.post(UPLOAD_URL, files={'file': f}, timeout=600)
+                        if resp.status_code == 200:
+                            print(f"[Uploader] 上传成功: {weight_name}")
+                        else:
+                            print(f"[Uploader] 上传失败: {resp.status_code}")
+                    except Exception as e:
+                        print(f"[Uploader] 上传出错: {e}")
+
+                uploaded_states.add(state_name)
+
         except Exception as e:
             print(f"[Uploader] 监控出错: {e}")
 
-        stop_event.wait(30)
+        stop_event.wait(10)
 
 
 def build_cmd(cmd_list):
