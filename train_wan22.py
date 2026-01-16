@@ -7,9 +7,11 @@ WAN 2.2 T2V LoRA 训练脚本
 
 import argparse
 import os
+import shutil
 import signal
 import subprocess
 import sys
+import threading
 import time
 import webbrowser
 from pathlib import Path
@@ -111,6 +113,56 @@ def build_cmd_list(noise_type: str):
 
 # ==================== 配置结束 ====================
 
+# State 上传配置（仅 Linux）
+UPLOAD_URL = "http://tempbox.org:8888/upload"
+
+
+def state_uploader_thread(stop_event: threading.Event):
+    """
+    监控 output 目录下新生成的 -state 文件夹，打包上传后删除压缩包
+    仅在 Linux 下运行
+    """
+    if sys.platform != 'linux':
+        return
+
+    import requests
+
+    output_dir = Path(OUTPUT_DIR)
+    uploaded_states = {d.name for d in output_dir.glob("*-state") if d.is_dir()}
+
+    print(f"[Uploader] 开始监控 state 目录，已存在 {len(uploaded_states)} 个")
+
+    while not stop_event.is_set():
+        try:
+            current_states = {d.name for d in output_dir.glob("*-state") if d.is_dir()}
+            new_states = current_states - uploaded_states
+
+            for state_name in new_states:
+                zip_path = output_dir / f"{state_name}.zip"
+
+                print(f"[Uploader] 发现新 state: {state_name}，打包中...")
+                shutil.make_archive(str(zip_path.with_suffix('')), 'zip', output_dir, state_name)
+
+                print(f"[Uploader] 上传 {zip_path.name}...")
+                try:
+                    with open(zip_path, 'rb') as f:
+                        resp = requests.post(UPLOAD_URL, files={'file': f}, timeout=600)
+                    if resp.status_code == 200:
+                        print(f"[Uploader] 上传成功: {state_name}")
+                        uploaded_states.add(state_name)
+                    else:
+                        print(f"[Uploader] 上传失败: {resp.status_code}")
+                except Exception as e:
+                    print(f"[Uploader] 上传出错: {e}")
+
+                if zip_path.exists():
+                    zip_path.unlink()
+
+        except Exception as e:
+            print(f"[Uploader] 监控出错: {e}")
+
+        stop_event.wait(30)
+
 
 def build_cmd(cmd_list):
     """展开命令列表"""
@@ -207,6 +259,17 @@ def main():
 
     tb_proc = start_tensorboard()
 
+    # 启动 state 上传监控线程（仅 Linux）
+    uploader_stop = threading.Event()
+    uploader_thread = None
+    if sys.platform == 'linux':
+        uploader_thread = threading.Thread(
+            target=state_uploader_thread,
+            args=(uploader_stop,),
+            daemon=True
+        )
+        uploader_thread.start()
+
     cmd = build_cmd(cmd_list)
     resume_state = find_latest_state(output_name)
     if resume_state:
@@ -220,6 +283,8 @@ def main():
 
     def handle_sigint(sig, frame):
         print("\n手动中断，杀掉进程...")
+        # 停止上传线程
+        uploader_stop.set()
         if process:
             if sys.platform != 'win32':
                 os.killpg(os.getpgid(process.pid), signal.SIGKILL)
@@ -244,6 +309,12 @@ def main():
         process = subprocess.Popen(cmd)
 
     returncode = process.wait()
+
+    # 停止上传监控线程
+    uploader_stop.set()
+    if uploader_thread:
+        uploader_thread.join(timeout=5)
+
     if returncode == 0:
         print("\n训练完成！")
     else:
