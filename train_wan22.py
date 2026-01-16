@@ -133,25 +133,31 @@ def kill_tensorboard():
 def start_tensorboard():
     """启动 TensorBoard（先杀掉已存在的进程），仅 Windows"""
     if sys.platform != 'win32':
+        print(f"非 Windows 环境 ({sys.platform})，跳过 TensorBoard")
         return None
+    print("正在启动 TensorBoard...")
     port = 6006
     kill_tensorboard()
     time.sleep(1)
 
     try:
+        # 不捕获输出，让 TensorBoard 正常运行
         proc = subprocess.Popen(
             ['tensorboard', '--logdir', LOGGING_DIR, '--port', str(port)],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if sys.platform == 'win32' else 0
+            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
         )
-        time.sleep(2)
+        time.sleep(3)
         if proc.poll() is None:
             url = f"http://localhost:{port}"
             print(f"TensorBoard 已启动: {url}")
             webbrowser.open(url)
             return proc
+        else:
+            print(f"TensorBoard 启动失败 (退出码: {proc.returncode})")
     except FileNotFoundError:
         print("未找到 tensorboard，请安装: pip install tensorboard")
+    except Exception as e:
+        print(f"启动 TensorBoard 时出错: {e}")
     return None
 
 
@@ -199,7 +205,7 @@ def main():
     Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
     Path(LOGGING_DIR).mkdir(parents=True, exist_ok=True)
 
-    start_tensorboard()
+    tb_proc = start_tensorboard()
 
     cmd = build_cmd(cmd_list)
     resume_state = find_latest_state(output_name)
@@ -222,6 +228,10 @@ def main():
                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             else:
                 process.kill()
+        # 杀掉 TensorBoard
+        if tb_proc and tb_proc.poll() is None:
+            tb_proc.terminate()
+            print("TensorBoard 已关闭")
         sys.exit(0)
 
     # 注册信号处理器
