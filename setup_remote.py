@@ -37,12 +37,16 @@ def main():
     parser.add_argument("-skip_download", action="store_true", help="跳过模型下载")
     parser.add_argument("-skip_cache", action="store_true", help="跳过缓存步骤")
 
-    # 模型噪声类型选择（互斥，必选其一）
-    noise_group = parser.add_mutually_exclusive_group(required=True)
+    # 模型噪声类型选择（互斥）
+    noise_group = parser.add_mutually_exclusive_group()
     noise_group.add_argument("-low", action="store_true", help="下载低噪声模型 (low_noise)")
     noise_group.add_argument("-high", action="store_true", help="下载高噪声模型 (high_noise)")
 
     args = parser.parse_args()
+
+    # 如果不跳过下载，则必须指定 -low 或 -high
+    if not args.skip_download and not args.low and not args.high:
+        parser.error("下载模型时必须指定 -low 或 -high")
 
     print("=" * 60)
     print("远程服务器初始化脚本")

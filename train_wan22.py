@@ -46,7 +46,7 @@ def build_cmd_list(noise_type: str):
         r"--t5 models/umt5-xxl-enc-bf16.safetensors",
 
         # 数据集
-        r"--dataset_config datasets/test6/dataset.toml",
+        r"--dataset_config datasets/test7/dataset.toml",
 
         # 精度与加速
         "--mixed_precision fp16",
