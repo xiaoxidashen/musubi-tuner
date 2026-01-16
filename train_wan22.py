@@ -125,7 +125,7 @@ def get_dir_size(path: Path) -> int:
     return sum(f.stat().st_size for f in path.rglob('*') if f.is_file())
 
 
-def wait_until_stable(paths: list, interval: float = 2.0, max_wait: int = 120):
+def wait_until_stable(paths: list, interval: float = 5.0, max_wait: int = 120):
     """等待文件/目录大小稳定"""
     def get_sizes():
         sizes = []
@@ -158,7 +158,8 @@ def wait_until_stable(paths: list, interval: float = 2.0, max_wait: int = 120):
 def state_uploader_thread(stop_event: threading.Event):
     """
     监控 output 目录下新生成的 -state 文件夹和对应的 safetensors 文件
-    等待文件写入完成后打包上传，仅在 Linux 下运行
+    根据修改时间判断是否有新文件，等待文件写入完成后打包上传
+    仅在 Linux 下运行
     """
     if sys.platform != 'linux':
         return
@@ -166,19 +167,27 @@ def state_uploader_thread(stop_event: threading.Event):
     import requests
 
     output_dir = Path(OUTPUT_DIR)
-    uploaded_states = {d.name for d in output_dir.glob("*-state") if d.is_dir()}
+    # 记录已上传 state 的修改时间 {name: mtime}
+    uploaded_mtimes = {d.name: d.stat().st_mtime for d in output_dir.glob("*-state") if d.is_dir()}
 
-    print(f"[Uploader] 开始监控 state 目录，已存在 {len(uploaded_states)} 个")
+    print(f"[Uploader] 开始监控 state 目录，已存在 {len(uploaded_mtimes)} 个")
 
     while not stop_event.is_set():
         try:
-            current_states = {d.name for d in output_dir.glob("*-state") if d.is_dir()}
-            new_states = current_states - uploaded_states
+            # 检测所有 state 目录
+            for state_path in output_dir.glob("*-state"):
+                if not state_path.is_dir():
+                    continue
 
-            for state_name in new_states:
+                state_name = state_path.name
+                current_mtime = state_path.stat().st_mtime
+
+                # 根据修改时间判断是否是新文件或更新的文件
+                if state_name in uploaded_mtimes and current_mtime <= uploaded_mtimes[state_name]:
+                    continue  # 已上传且未更新
+
                 # state 文件夹: lh_lora_v1_high-000100-state
                 # 对应权重文件: lh_lora_v1_high-000100.safetensors
-                state_path = output_dir / state_name
                 weight_name = state_name.replace('-state', '.safetensors')
                 weight_path = output_dir / weight_name
 
@@ -187,7 +196,7 @@ def state_uploader_thread(stop_event: threading.Event):
                 if weight_path.exists():
                     paths_to_check.append(weight_path)
 
-                print(f"[Uploader] 发现新文件，等待写入完成...")
+                print(f"[Uploader] 发现新/更新的文件: {state_name}，等待写入完成...")
                 if not wait_until_stable(paths_to_check):
                     print(f"[Uploader] 等待超时，跳过本次")
                     continue
@@ -225,7 +234,8 @@ def state_uploader_thread(stop_event: threading.Event):
                     except Exception as e:
                         print(f"[Uploader] 上传出错: {e}")
 
-                uploaded_states.add(state_name)
+                # 记录当前修改时间
+                uploaded_mtimes[state_name] = state_path.stat().st_mtime
 
         except Exception as e:
             print(f"[Uploader] 监控出错: {e}")
