@@ -167,27 +167,24 @@ def state_uploader_thread(stop_event: threading.Event):
     import requests
 
     output_dir = Path(OUTPUT_DIR)
-    # 记录已上传 state 的修改时间 {name: mtime}
-    uploaded_mtimes = {d.name: d.stat().st_mtime for d in output_dir.glob("*-state") if d.is_dir()}
+    # 记录已上传的 state: "name_mtime" 格式
+    uploaded_keys = {f"{d.name}_{d.stat().st_mtime}" for d in output_dir.glob("*-state") if d.is_dir()}
 
-    print(f"[Uploader] 开始监控 state 目录，已存在 {len(uploaded_mtimes)} 个")
+    print(f"[Uploader] 开始监控 state 目录，已存在 {len(uploaded_keys)} 个")
 
     while not stop_event.is_set():
         try:
-            state_count = len(list(output_dir.glob("*-state")))
-            print(f"[Uploader] 扫描中... 当前 state 目录数: {state_count}")
-
             # 检测所有 state 目录
             for state_path in output_dir.glob("*-state"):
                 if not state_path.is_dir():
                     continue
 
                 state_name = state_path.name
-                current_mtime = state_path.stat().st_mtime
+                current_key = f"{state_name}_{state_path.stat().st_mtime}"
 
-                # 根据修改时间判断是否是新文件或更新的文件
-                if state_name in uploaded_mtimes and current_mtime <= uploaded_mtimes[state_name]:
-                    continue  # 已上传且未更新
+                # 名字+时间作为唯一标识，时间变了就是新文件
+                if current_key in uploaded_keys:
+                    continue
 
                 # state 文件夹: lh_lora_v1_high-000100-state
                 # 对应权重文件: lh_lora_v1_high-000100.safetensors
@@ -237,8 +234,8 @@ def state_uploader_thread(stop_event: threading.Event):
                     except Exception as e:
                         print(f"[Uploader] 上传出错: {e}")
 
-                # 记录当前修改时间
-                uploaded_mtimes[state_name] = state_path.stat().st_mtime
+                # 记录已上传
+                uploaded_keys.add(current_key)
 
         except Exception as e:
             print(f"[Uploader] 监控出错: {e}")
