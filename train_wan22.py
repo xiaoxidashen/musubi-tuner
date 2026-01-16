@@ -108,8 +108,8 @@ def build_cmd_list(noise_type: str):
         "--log_config",
 
         # 采样（可选，注释掉则禁用）
-        # "--sample_prompts ./sample_prompts.txt",
-        # "--sample_every_n_epochs 20",
+        "--sample_prompts ./sample_prompts.txt",
+        "--sample_every_n_epochs 10",
         # "--sample_at_first",
     ], output_name
 
