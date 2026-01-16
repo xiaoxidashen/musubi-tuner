@@ -129,6 +129,12 @@ def main():
 
     # 对每个数据集进行缓存
     for config_path in configs:
+        # 检查是否已有 cache 目录
+        cache_dir = config_path.parent / "cache"
+        if cache_dir.exists():
+            print(f"\n跳过 {config_path}（已存在 cache 目录）")
+            continue
+
         print("\n" + "=" * 60)
         print(f"处理数据集: {config_path}")
         print("=" * 60)
