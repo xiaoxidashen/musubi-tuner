@@ -158,8 +158,8 @@ def state_uploader_thread(stop_event: threading.Event):
                     continue
 
                 # 发现新文件，等待 5 秒确保写入完成
-                print(f"[Uploader] 发现新文件: {weight_name}，等待 5 秒...")
-                time.sleep(5)
+                print(f"[Uploader] 发现新文件: {weight_name}，等待 10 秒...")
+                time.sleep(10)
 
                 # 上传 safetensors
                 print(f"[Uploader] 上传 {weight_name}...")
