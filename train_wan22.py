@@ -3,6 +3,7 @@
 WAN 2.2 T2V LoRA 训练脚本
 直接运行即可，支持自动断点续训
 用法: python train_wan22.py -low  或  python train_wan22.py -high
+      python train_wan22.py -high -only_weight  # 仅加载权重，不恢复优化器状态
 """
 
 import argparse
@@ -53,7 +54,7 @@ def build_cmd_list(noise_type: str):
         # 精度与加速
         "--mixed_precision fp16",
         "--fp8_base",
-        "--blocks_to_swap 1",  # 将20个块交换到CPU，节省显存（模型共40层）
+        # "--blocks_to_swap 1",  # 将20个块交换到CPU，节省显存（模型共40层）
         "--img_in_txt_in_offloading",  # 将 img_in 和 txt_in 卸载到 CPU
         '--flash_attn' if sys.platform == 'linux' else '--xformers',
         "--split_attn",  # 切分注意力计算以节省显存
@@ -65,7 +66,7 @@ def build_cmd_list(noise_type: str):
 
         # 优化器
         "--optimizer_type adamw8bit",
-        "--learning_rate 0.002",
+        "--learning_rate 0.001",
 
         # 学习率调度
         "--lr_scheduler constant_with_warmup", # polynomial 多项式衰减, cosine 余弦退火(推荐用cosine_with_min_lr)
@@ -245,12 +246,35 @@ def find_latest_state(output_name):
     return str(latest)
 
 
+def find_latest_weight(output_name):
+    """查找最新的权重文件（通过文件修改时间判断）"""
+    output_dir = Path(OUTPUT_DIR)
+
+    # 查找所有权重文件: lh_lora_v1_high-000100.safetensors
+    weight_files = list(output_dir.glob(f"{output_name}-*.safetensors"))
+
+    if not weight_files:
+        print("未找到已保存的权重，将从头开始训练")
+        return None
+
+    # 按文件修改时间排序，取最新的
+    weight_files.sort(key=lambda x: x.stat().st_mtime)
+    latest = weight_files[-1]
+
+    epoch = latest.stem.split('-')[-1]
+    print(f"找到权重文件: {latest.name}，从 epoch {epoch} 的权重继续")
+
+    return str(latest)
+
+
 def main():
     # 解析命令行参数
     parser = argparse.ArgumentParser(description="WAN 2.2 T2V LoRA 训练脚本")
     noise_group = parser.add_mutually_exclusive_group(required=True)
     noise_group.add_argument("-low", action="store_true", help="使用低噪声模型训练")
     noise_group.add_argument("-high", action="store_true", help="使用高噪声模型训练")
+    parser.add_argument("-only_weight", action="store_true",
+                        help="仅加载权重恢复（不恢复优化器状态）")
     args = parser.parse_args()
 
     noise_type = 'low' if args.low else 'high'
@@ -273,9 +297,16 @@ def main():
         uploader_thread.start()
 
     cmd = build_cmd(cmd_list)
-    resume_state = find_latest_state(output_name)
-    if resume_state:
-        cmd.extend(["--resume", resume_state])
+
+    # 恢复训练：-only_weight 仅加载权重，否则加载完整状态
+    if args.only_weight:
+        latest_weight = find_latest_weight(output_name)
+        if latest_weight:
+            cmd.extend(["--network_weights", latest_weight])
+    else:
+        resume_state = find_latest_state(output_name)
+        if resume_state:
+            cmd.extend(["--resume", resume_state])
 
     print(f"\n{'=' * 60}")
     print(f"WAN 2.2 LoRA 训练: {output_name} ({noise_type} noise)")
