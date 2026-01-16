@@ -120,45 +120,16 @@ def build_cmd_list(noise_type: str):
 UPLOAD_URL = "http://tempbox.org:8888/upload"
 
 
-def get_dir_size(path: Path) -> int:
-    """获取目录总大小"""
-    return sum(f.stat().st_size for f in path.rglob('*') if f.is_file())
-
-
-def wait_until_stable(paths: list, interval: float = 5.0, max_wait: int = 120):
-    """等待文件/目录大小稳定"""
-    def get_sizes():
-        sizes = []
-        for p in paths:
-            if p.is_dir():
-                sizes.append(get_dir_size(p))
-            elif p.is_file():
-                sizes.append(p.stat().st_size)
-            else:
-                sizes.append(0)
-        return sizes
-
-    last_sizes = get_sizes()
-    waited = 0
-    check_count = 0
-    while waited < max_wait:
-        time.sleep(interval)
-        waited += interval
-        check_count += 1
-        current_sizes = get_sizes()
-        total_mb = sum(current_sizes) / 1024 / 1024
-        if check_count % 5 == 0:  # 每 10 秒打印一次（5 次 * 2 秒）
-            print(f"[Uploader] 等待写入完成... {waited:.0f}s, 当前大小: {total_mb:.1f}MB")
-        if current_sizes == last_sizes:
-            return True
-        last_sizes = current_sizes
-    return False
+def get_file_key(path: Path) -> str:
+    """用 mtime/ctime/size/ino 生成文件唯一标识"""
+    st = path.stat()
+    return f"{path.name}_{st.st_mtime}_{st.st_ctime}_{st.st_size}_{st.st_ino}"
 
 
 def state_uploader_thread(stop_event: threading.Event):
     """
-    监控 output 目录下新生成的 -state 文件夹和对应的 safetensors 文件
-    根据修改时间判断是否有新文件，等待文件写入完成后打包上传
+    监控 output 目录下的 .safetensors 文件变化
+    发现变化后等待 5 秒，然后上传 safetensors 和对应的 state 目录
     仅在 Linux 下运行
     """
     if sys.platform != 'linux':
@@ -167,72 +138,65 @@ def state_uploader_thread(stop_event: threading.Event):
     import requests
 
     output_dir = Path(OUTPUT_DIR)
-    # 记录已上传的 state: "name_mtime" 格式
-    uploaded_keys = {f"{d.name}_{d.stat().st_mtime}" for d in output_dir.glob("*-state") if d.is_dir()}
+    # 记录已上传文件的唯一标识
+    uploaded_keys = {get_file_key(f) for f in output_dir.glob("*.safetensors") if f.is_file()}
 
-    print(f"[Uploader] 开始监控 state 目录，已存在 {len(uploaded_keys)} 个")
+    print(f"[Uploader] 开始监控 safetensors 文件，已存在 {len(uploaded_keys)} 个")
 
     while not stop_event.is_set():
         try:
-            # 检测所有 state 目录
-            for state_path in output_dir.glob("*-state"):
-                if not state_path.is_dir():
+            # 检测所有 safetensors 文件
+            for weight_path in output_dir.glob("*.safetensors"):
+                if not weight_path.is_file():
                     continue
 
-                state_name = state_path.name
-                current_key = f"{state_name}_{state_path.stat().st_mtime}"
+                weight_name = weight_path.name
+                current_key = get_file_key(weight_path)
 
-                # 名字+时间作为唯一标识，时间变了就是新文件
+                # 文件属性作为唯一标识
                 if current_key in uploaded_keys:
                     continue
 
-                # state 文件夹: lh_lora_v1_high-000100-state
-                # 对应权重文件: lh_lora_v1_high-000100.safetensors
-                weight_name = state_name.replace('-state', '.safetensors')
-                weight_path = output_dir / weight_name
+                # 发现新文件，等待 5 秒确保写入完成
+                print(f"[Uploader] 发现新文件: {weight_name}，等待 5 秒...")
+                time.sleep(5)
 
-                # 等待文件写入完成
-                paths_to_check = [state_path]
-                if weight_path.exists():
-                    paths_to_check.append(weight_path)
-
-                print(f"[Uploader] 发现新/更新的文件: {state_name}，等待写入完成...")
-                if not wait_until_stable(paths_to_check):
-                    print(f"[Uploader] 等待超时，跳过本次")
-                    continue
-
-                # 打包 state 文件夹
-                zip_path = output_dir / f"{state_name}.zip"
-                print(f"[Uploader] 打包 {state_name}...")
-                shutil.make_archive(str(zip_path.with_suffix('')), 'zip', output_dir, state_name)
-
-                # 上传 state zip
-                print(f"[Uploader] 上传 {zip_path.name}...")
+                # 上传 safetensors
+                print(f"[Uploader] 上传 {weight_name}...")
                 try:
-                    with open(zip_path, 'rb') as f:
+                    with open(weight_path, 'rb') as f:
                         resp = requests.post(UPLOAD_URL, files={'file': f}, timeout=600)
                     if resp.status_code == 200:
-                        print(f"[Uploader] 上传成功: {zip_path.name}")
+                        print(f"[Uploader] 上传成功: {weight_name}")
                     else:
                         print(f"[Uploader] 上传失败: {resp.status_code}")
+                        continue
                 except Exception as e:
                     print(f"[Uploader] 上传出错: {e}")
+                    continue
 
-                if zip_path.exists():
-                    zip_path.unlink()
+                # 对应的 state 目录: xxx.safetensors -> xxx-state
+                state_name = weight_name.replace('.safetensors', '-state')
+                state_path = output_dir / state_name
 
-                # 上传 safetensors 文件
-                if weight_path.exists():
-                    print(f"[Uploader] 上传 {weight_name}...")
+                if state_path.is_dir():
+                    zip_path = output_dir / f"{state_name}.zip"
+                    print(f"[Uploader] 打包 {state_name}...")
+                    shutil.make_archive(str(zip_path.with_suffix('')), 'zip', output_dir, state_name)
+
+                    print(f"[Uploader] 上传 {zip_path.name}...")
                     try:
-                        with open(weight_path, 'rb') as f:
+                        with open(zip_path, 'rb') as f:
                             resp = requests.post(UPLOAD_URL, files={'file': f}, timeout=600)
                         if resp.status_code == 200:
-                            print(f"[Uploader] 上传成功: {weight_name}")
+                            print(f"[Uploader] 上传成功: {zip_path.name}")
                         else:
                             print(f"[Uploader] 上传失败: {resp.status_code}")
                     except Exception as e:
                         print(f"[Uploader] 上传出错: {e}")
+
+                    if zip_path.exists():
+                        zip_path.unlink()
 
                 # 记录已上传
                 uploaded_keys.add(current_key)
