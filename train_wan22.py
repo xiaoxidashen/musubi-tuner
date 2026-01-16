@@ -174,6 +174,9 @@ def state_uploader_thread(stop_event: threading.Event):
 
     while not stop_event.is_set():
         try:
+            state_count = len(list(output_dir.glob("*-state")))
+            print(f"[Uploader] 扫描中... 当前 state 目录数: {state_count}")
+
             # 检测所有 state 目录
             for state_path in output_dir.glob("*-state"):
                 if not state_path.is_dir():
