@@ -34,8 +34,14 @@ def main():
     import os
 
     parser = argparse.ArgumentParser(description="远程服务器初始化脚本")
-    parser.add_argument("--skip_download", action="store_true", help="跳过模型下载")
-    parser.add_argument("--skip_cache", action="store_true", help="跳过缓存步骤")
+    parser.add_argument("-skip_download", action="store_true", help="跳过模型下载")
+    parser.add_argument("-skip_cache", action="store_true", help="跳过缓存步骤")
+
+    # 模型噪声类型选择（互斥，必选其一）
+    noise_group = parser.add_mutually_exclusive_group(required=True)
+    noise_group.add_argument("-low", action="store_true", help="下载低噪声模型 (low_noise)")
+    noise_group.add_argument("-high", action="store_true", help="下载高噪声模型 (high_noise)")
+
     args = parser.parse_args()
 
     print("=" * 60)
@@ -61,10 +67,18 @@ def main():
     print(f"当前目录: {os.getcwd()}")
 
     if not args.skip_download:
+        # 根据参数选择模型
+        if args.low:
+            dit_model = "wan2.2_t2v_low_noise_14B_fp16.safetensors"
+            noise_type = "低噪声"
+        else:
+            dit_model = "wan2.2_t2v_high_noise_14B_fp16.safetensors"
+            noise_type = "高噪声"
+
         # 下载模型文件
         run_command(
-            "hf download Comfy-Org/Wan_2.2_ComfyUI_Repackaged split_files/diffusion_models/wan2.2_t2v_low_noise_14B_fp16.safetensors --local-dir .",
-            "下载 DiT 模型"
+            f"hf download Comfy-Org/Wan_2.2_ComfyUI_Repackaged split_files/diffusion_models/{dit_model} --local-dir .",
+            f"下载 DiT 模型 ({noise_type})"
         )
 
         run_command(
