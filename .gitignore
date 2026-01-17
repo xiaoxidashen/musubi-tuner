@@ -27,3 +27,4 @@ models/*
 !models/.git_keep
 
 output
+src/musubi_tuner.egg-info/
