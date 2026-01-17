@@ -66,13 +66,15 @@ def build_cmd_list(noise_type: str):
 
         # 优化器
         "--optimizer_type adamw8bit",
-        "--learning_rate 0.001",
+        "--learning_rate 3e-4",
 
         # 学习率调度
-        "--lr_scheduler polynomial", # polynomial 多项式衰减, cosine 余弦退火(推荐用cosine_with_min_lr)
-        "--lr_warmup_steps 10",
-        "--lr_scheduler_power 1.0", # 仅适用于 polynomial 衰减, 默认为 1, >1 凹函数（下凹）, <1 凸函数（上凸）
-        "--lr_scheduler_min_lr_ratio 0", # 最小学习率, polynomial和cosine_with_min_lr的初始学习率的百分比
+        "--lr_scheduler cosine",
+        "--lr_warmup_steps 10%",
+        # "--lr_scheduler polynomial", # polynomial 多项式衰减, cosine 余弦退火(推荐用cosine_with_min_lr)
+        # "--lr_warmup_steps 10",
+        # "--lr_scheduler_power 1.0", # 仅适用于 polynomial 衰减, 默认为 1, >1 凹函数（下凹）, <1 凸函数（上凸）
+        # "--lr_scheduler_min_lr_ratio 0", # 最小学习率, polynomial和cosine_with_min_lr的初始学习率的百分比
 
         # 数据加载
         "--max_data_loader_n_workers 8",
@@ -81,7 +83,7 @@ def build_cmd_list(noise_type: str):
         # LoRA
         "--network_module networks.lora_wan",
         "--network_dim 32",
-        "--network_alpha 32",  # 推荐设为 dim 的一半，即 16
+        "--network_alpha 32",
 
         # 时间步
         "--timestep_sampling sigmoid",
@@ -91,7 +93,7 @@ def build_cmd_list(noise_type: str):
         "--preserve_distribution_shape",
 
         # 训练与保存
-        "--max_train_epochs 50",
+        "--max_train_epochs 100",
         "--save_every_n_epochs 1",
         "--save_state",
         "--save_last_n_epochs_state 5",
