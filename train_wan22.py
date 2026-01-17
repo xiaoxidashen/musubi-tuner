@@ -77,7 +77,7 @@ def build_cmd_list(noise_type: str):
         # "--lr_scheduler_min_lr_ratio 0", # 最小学习率, polynomial和cosine_with_min_lr的初始学习率的百分比
 
         # 数据加载
-        "--max_data_loader_n_workers 8",
+        "--max_data_loader_n_workers 2",
         # "--gradient_accumulation_steps 2",
 
         # LoRA
@@ -93,7 +93,7 @@ def build_cmd_list(noise_type: str):
         "--preserve_distribution_shape",
 
         # 训练与保存
-        "--max_train_epochs 100",
+        "--max_train_epochs 50",
         "--save_every_n_epochs 1",
         "--save_state",
         "--save_last_n_epochs_state 5",
