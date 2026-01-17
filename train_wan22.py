@@ -66,7 +66,7 @@ def build_cmd_list(noise_type: str):
 
         # 优化器
         "--optimizer_type adamw8bit",
-        "--learning_rate 3.5e-4",
+        "--learning_rate 1e-4",
 
         # 学习率调度
         "--lr_scheduler cosine",
