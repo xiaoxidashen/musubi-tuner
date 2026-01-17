@@ -178,27 +178,27 @@ def state_uploader_thread(stop_event: threading.Event):
                     continue
 
                 # 对应的 state 目录: xxx.safetensors -> xxx-state
-                state_name = weight_name.replace('.safetensors', '-state')
-                state_path = output_dir / state_name
-
-                if state_path.is_dir():
-                    zip_path = output_dir / f"{state_name}.zip"
-                    print(f"[Uploader] 打包 {state_name}...")
-                    shutil.make_archive(str(zip_path.with_suffix('')), 'zip', output_dir, state_name)
-
-                    print(f"[Uploader] 上传 {zip_path.name}...")
-                    try:
-                        with open(zip_path, 'rb') as f:
-                            resp = requests.post(UPLOAD_URL, files={'file': f}, timeout=600)
-                        if resp.status_code == 200:
-                            print(f"[Uploader] 上传成功: {zip_path.name}")
-                        else:
-                            print(f"[Uploader] 上传失败: {resp.status_code}")
-                    except Exception as e:
-                        print(f"[Uploader] 上传出错: {e}")
-
-                    if zip_path.exists():
-                        zip_path.unlink()
+                # state_name = weight_name.replace('.safetensors', '-state')
+                # state_path = output_dir / state_name
+                #
+                # if state_path.is_dir():
+                #     zip_path = output_dir / f"{state_name}.zip"
+                #     print(f"[Uploader] 打包 {state_name}...")
+                #     shutil.make_archive(str(zip_path.with_suffix('')), 'zip', output_dir, state_name)
+                #
+                #     print(f"[Uploader] 上传 {zip_path.name}...")
+                #     try:
+                #         with open(zip_path, 'rb') as f:
+                #             resp = requests.post(UPLOAD_URL, files={'file': f}, timeout=600)
+                #         if resp.status_code == 200:
+                #             print(f"[Uploader] 上传成功: {zip_path.name}")
+                #         else:
+                #             print(f"[Uploader] 上传失败: {resp.status_code}")
+                #     except Exception as e:
+                #         print(f"[Uploader] 上传出错: {e}")
+                #
+                #     if zip_path.exists():
+                #         zip_path.unlink()
 
                 # 记录已上传
                 uploaded_keys.add(current_key)
